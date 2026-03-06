@@ -1,0 +1,26 @@
+.quelab-title {
+  font-size: 50;
+  font-weight: bold;
+  margin: 20;
+  text-align: center;
+  font-family: "GoblinOne"
+}
+
+.vibe-button {
+  margin: 10 20;
+  padding: 12;
+  font-size: 30;
+  background-color: #e0e199;
+  color: black;
+  border-radius: 30;
+  font-family: "Gabriela-Regular";
+  text-transform: none;
+
+  transition-property: background-color, transform;
+  transition-duration: 0.1s;
+}
+
+.vibe-button:pressed {
+  background-color: #c5c67a;
+  transform: scale(0.95);
+}
