@@ -11,8 +11,7 @@ import { Label, ScrollView } from '@nativescript/core';
 </script>
 
 <template>
-  <Frame>
-    <Page actionBarHidden="true">
+    <Page actionBarHidden="true" class="light-yellow-bg">
         <StackLayout>
 
           <Label text="QueLab" class="quelab-title" />
@@ -22,11 +21,5 @@ import { Label, ScrollView } from '@nativescript/core';
 
         </StackLayout>
     </Page>
-  </Frame>
 </template>
 
-<style>
-/* .info {
-    font-size: 20;
-  } */
-</style>
