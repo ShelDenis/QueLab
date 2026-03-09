@@ -7,7 +7,30 @@ import {
   $navigateTo,
 } from 'nativescript-vue';
 import Details from './Details.vue';
+import Profile from './Profile.vue';
+import ActiveQueues from './ActiveQueues.vue';
 import { Label, ScrollView } from '@nativescript/core';
+
+const onProfile = () => {
+  $navigateTo(Profile, {
+    transition: {
+      name: 'slide',
+      duration: 300,
+      curve: 'easeOut'
+    }
+  });
+};
+
+const onActiveQueues = () => {
+  $navigateTo(ActiveQueues, {
+    transition: {
+      name: 'slide',
+      duration: 300,
+      curve: 'easeOut'
+    }
+  });
+};
+
 </script>
 
 <template>
