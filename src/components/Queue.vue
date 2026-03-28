@@ -8,10 +8,21 @@ import {
 } from 'nativescript-vue';
 import Details from './Details.vue';
 import ActiveQueues from './ActiveQueues.vue';
+import QueueInfo from './QueueInfo.vue';
 import { Label, ScrollView } from '@nativescript/core';
 
 const onActiveQueues = () => {
   $navigateTo(ActiveQueues, {
+    transition: {
+      name: 'slide',
+      duration: 300,
+      curve: 'easeOut'
+    }
+  });
+};
+
+const onInfo = () => {
+  $navigateTo(QueueInfo, {
     transition: {
       name: 'slide',
       duration: 300,
@@ -100,7 +111,7 @@ const onActiveQueues = () => {
                </FlexboxLayout>
 
                <FlexboxLayout
-                @tap="onAnotherAction"
+                @tap="onInfo"
                 alignItems="center"
                 backgroundColor="#CCF8FF"
                   borderColor="#45E9FB"

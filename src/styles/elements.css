@@ -37,6 +37,13 @@
   font-family: "Gabriela-Regular"
 }
 
+.info-text {
+  padding: 10;
+  font-size: 25;
+  text-align: center;
+  font-family: "Gabriela-Regular"
+}
+
 .button-text {
   font-size: ;
   text-align: center;
@@ -116,6 +123,13 @@
   width: 250;
   height: 250;
   border-radius: 125;
+  border-width: 0;
+}
+
+.info-img {
+  margin: 20;
+  padding: 8;
+  border-radius: 20;
   border-width: 0;
 }
 
