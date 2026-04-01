@@ -8,6 +8,7 @@ import {
 } from 'nativescript-vue';
 import Details from './Details.vue';
 import Profile from './Profile.vue';
+import QueueCreate from './QueueCreate.vue';
 import ActiveQueues from './ActiveQueues.vue';
 import { Label, ScrollView } from '@nativescript/core';
 
@@ -31,6 +32,16 @@ const onActiveQueues = () => {
   });
 };
 
+const onCreateQueues = () => {
+  $navigateTo(QueueCreate, {
+    transition: {
+      name: 'slide',
+      duration: 300,
+      curve: 'easeOut'
+    }
+  });
+};
+
 </script>
 
 <template>
@@ -40,7 +51,7 @@ const onActiveQueues = () => {
           <Label text="QueLab" class="quelab-title" />
           <Button text="Профиль" @tap="onProfile" class="vibe-button" />
           <Button text="Активные очереди" @tap="onActiveQueues" class="vibe-button" />
-          <Button text="Создать очередь" @tap="onCreateQueue" class="vibe-button" />
+          <Button text="Создать очередь" @tap="onCreateQueues" class="vibe-button" />
 
         </StackLayout>
     </Page>
