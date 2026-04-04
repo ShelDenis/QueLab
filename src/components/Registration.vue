@@ -25,26 +25,26 @@ const onReady = () => {
 <template>
     <Page actionBarHidden="true" class="light-yellow-bg">
         <GridLayout rows="*, auto">
-            <StackLayout row="0">
+            <ScrollView row="0">
+                <StackLayout>
+                  <Label text="Регистрация" class="simple-title" />
 
-              <Label text="Регистрация" class="simple-title" />
+                  <Label text="Имя" class="small-text" />
+                  <TextField class="yellow-field"/>
 
-              <Label text="Имя" class="small-text" />
-              <TextField class="yellow-field"/>
+                  <Label text="Фамилия" class="small-text" />
+                  <TextField class="yellow-field"/>
 
-              <Label text="Фамилия" class="small-text" />
-              <TextField class="yellow-field"/>
+                  <Label text="Почта" class="small-text" />
+                  <TextField class="yellow-field"/>
 
-              <Label text="Почта" class="small-text" />
-              <TextField class="yellow-field"/>
+                  <Label text="Пароль" class="small-text" />
+                  <TextField class="yellow-field"/>
 
-              <Label text="Пароль" class="small-text" />
-              <TextField class="yellow-field"/>
-
-              <Label text="Повторите пароль" class="small-text" />
-              <TextField class="yellow-field"/>
-
-            </StackLayout>
+                  <Label text="Повторите пароль" class="small-text" />
+                  <TextField class="yellow-field"/>
+                </StackLayout>
+              </ScrollView>
 
             <Button text="Готово" @tap="onReady" class="vibe-button" row="1" style="margin-bottom: 30;" />
         </GridLayout>

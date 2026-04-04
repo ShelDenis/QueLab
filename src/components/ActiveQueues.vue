@@ -8,10 +8,21 @@ import {
 } from 'nativescript-vue';
 import Details from './Details.vue';
 import Menu from './Menu.vue';
+import Queue from './Queue.vue';
 import { Label, ScrollView } from '@nativescript/core';
 
 const onMenu = () => {
   $navigateTo(Menu, {
+    transition: {
+      name: 'slide',
+      duration: 300,
+      curve: 'easeOut'
+    }
+  });
+};
+
+const onQueue = () => {
+  $navigateTo(Queue, {
     transition: {
       name: 'slide',
       duration: 300,
@@ -37,7 +48,7 @@ const onMenu = () => {
 
           <Label text="Активные очереди" class="medium-text" />
 
-          <Button text="Практикум" @tap="onReady" class="vibe-button"/>
+          <Button text="Практикум" @tap="onQueue" class="vibe-button"/>
 
         </StackLayout>
     </Page>
