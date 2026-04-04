@@ -9,6 +9,7 @@ import {
 import Details from './Details.vue';
 import ActiveQueues from './ActiveQueues.vue';
 import QueueInfo from './QueueInfo.vue';
+import ChatScreen from './ChatScreen.vue';
 import { Label, ScrollView } from '@nativescript/core';
 
 const onActiveQueues = () => {
@@ -30,6 +31,17 @@ const onInfo = () => {
     }
   });
 };
+
+const onChat = () => {
+  $navigateTo(ChatScreen, {
+    transition: {
+      name: 'slide',
+      duration: 300,
+      curve: 'easeOut'
+    }
+  });
+};
+
 </script>
 
 <template>
@@ -95,7 +107,7 @@ const onInfo = () => {
                 </FlexboxLayout>
 
                 <FlexboxLayout
-                 @tap="onAnotherAction"
+                 @tap="onChat"
                  alignItems="center"
                  backgroundColor="#F2C4FF"
                    borderColor="#FF73FF"
