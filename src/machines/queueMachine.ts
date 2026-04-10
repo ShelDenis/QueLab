@@ -3,17 +3,17 @@ import { createMachine, assign } from 'xstate';
 export const queueMachine = createMachine({
   id: 'queue',
   initial: 'idle',
+  // Указываем типы прямо в контексте через 'as'
   context: {
-    position: null,
-    totalInQueue: 3,
-    error: null
+    position: null as number | null,
+    totalInQueue: 3 as number,
+    error: null as string | null
   },
   states: {
     idle: { 
       on: { JOIN: 'joining' } 
     },
     joining: {
-      // Имитация запроса к API
       on: {
         SUCCESS: {
           target: 'waiting',
@@ -26,7 +26,10 @@ export const queueMachine = createMachine({
       on: {
         MOVE_UP: {
           actions: assign({ 
-            position: ({ context }) => Math.max(1, context.position - 1) 
+            position: ({ context }: any) => {
+              // Добавляем проверку на null, чтобы Math.max не ругался
+              return context.position !== null ? Math.max(1, context.position - 1) : null;
+            }
           })
         },
         YOUR_TURN: 'active',

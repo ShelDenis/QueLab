@@ -1,12 +1,14 @@
 <script lang="ts" setup>
 import { ref, watch } from 'nativescript-vue';
 import { useMachine } from '@xstate/vue';
-import { authMachine } from '~/machines/authMachine.js';
+import { authMachine } from '../machines/authMachine';
 import Menu from './Menu.vue';
 import { $navigateTo } from 'nativescript-vue';
 
-// Инициализируем машину
-const { state, send } = useMachine(authMachine);
+import { useGlobalState } from '../services/stateService';
+
+const { auth } = useGlobalState();
+const { state, send } = auth;
 
 // Локальные реактивные переменные для полей
 const email = ref('');
