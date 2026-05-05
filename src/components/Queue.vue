@@ -1,47 +1,66 @@
 <script lang="ts" setup>
-import {
-  ref,
-  computed,
-  onMounted,
-  onUnmounted,
-  $navigateTo,
-} from 'nativescript-vue';
-import Details from './Details.vue';
+import { ref } from 'nativescript-vue';
+import { $navigateTo } from 'nativescript-vue';
+
+import { useMachine } from '@xstate/vue';
+import { queueMachine } from '../machines/queueMachine';
+import { onlineMachine } from '../machines/onlineMachine';
+
 import ActiveQueues from './ActiveQueues.vue';
 import QueueInfo from './QueueInfo.vue';
 import ChatScreen from './ChatScreen.vue';
-import { Label, ScrollView } from '@nativescript/core';
+
+import { useGlobalState } from '../services/stateService';
+
+const { queue, online } = useGlobalState();
+const { state: qState, send: qSend } = queue; // qState — Ref<State>
+const { state: oState, send: oSend } = online;
+
 
 const onActiveQueues = () => {
   $navigateTo(ActiveQueues, {
-    transition: {
-      name: 'slide',
-      duration: 300,
-      curve: 'easeOut'
-    }
+    transition: { name: 'slide', duration: 300, curve: 'easeOut' }
   });
 };
 
 const onInfo = () => {
   $navigateTo(QueueInfo, {
-    transition: {
-      name: 'slide',
-      duration: 300,
-      curve: 'easeOut'
-    }
+    transition: { name: 'slide', duration: 300, curve: 'easeOut' }
   });
 };
 
 const onChat = () => {
   $navigateTo(ChatScreen, {
-    transition: {
-      name: 'slide',
-      duration: 300,
-      curve: 'easeOut'
-    }
+    transition: { name: 'slide', duration: 300, curve: 'easeOut' }
   });
 };
 
+// --- НОВЫЕ ФУНКЦИИ ДЛЯ РАБОТЫ С ОЧЕРЕДЬЮ ---
+
+const onTap = () => console.log('Нажали на человека в списке');
+const onAnotherAction = () => console.log('Дополнительное действие');
+
+const onJoinQueue = () => {
+  // Проверяем, есть ли интернет перед тем как тыкать кнопку
+  if (oState.value.matches('offline')) {
+      alert("Нет интернета!");
+      return;
+  }
+  // Если мы уже в процессе или уже в очереди — ничего не делаем
+  if (!qState.value.matches('idle')) return;
+  
+  // Отправляем сигнал в машину
+  qSend({ type: 'JOIN' });
+
+  // Имитация ответа сервера (потом заменить на реальный API)
+  setTimeout(() => {
+    qSend({ type: 'SUCCESS' });
+  }, 1000);
+};
+
+const onLeaveQueue = () => {
+  qSend({ type: 'LEAVE' });
+};
 </script>
 
 <template>
@@ -240,8 +259,10 @@ const onChat = () => {
                 class="bottom-bar"
               >
 
-                <FlexboxLayout
-                  @tap="onActiveQueues"
+              <FlexboxLayout
+                  @tap="onJoinQueue" 
+                  :isEnabled="oState.matches('online')" 
+                  :opacity="oState.matches('online') ? 1 : 0.5"
                   alignItems="center"
                   justifyContent="center"
                   width="60"
@@ -273,7 +294,7 @@ const onChat = () => {
                 </FlexboxLayout>
 
                 <FlexboxLayout
-                  @tap="onActiveQueues"
+                  @tap="onLeaveQueue"
                   alignItems="center"
                   justifyContent="center"
                   width="60"

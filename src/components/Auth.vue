@@ -1,45 +1,70 @@
 <script lang="ts" setup>
-import {
-  ref,
-  computed,
-  onMounted,
-  onUnmounted,
-  $navigateTo,
-} from 'nativescript-vue';
-import Details from './Details.vue';
+import { ref, watch } from 'nativescript-vue';
+import { useMachine } from '@xstate/vue';
+import { authMachine } from '../machines/authMachine';
 import Menu from './Menu.vue';
-import { Label, ScrollView } from '@nativescript/core';
+import { $navigateTo } from 'nativescript-vue';
+
+import { useGlobalState } from '../services/stateService';
+
+const { auth } = useGlobalState();
+const { state, send } = auth;
+
+// Локальные реактивные переменные для полей
+const email = ref('');
+const password = ref('');
+
+// Следим за состоянием машины: если аутентифицирован — переходим в меню
+watch(() => state.value.value, (newState) => {
+  if (newState === 'authenticated') {
+    $navigateTo(Menu, {
+      transition: { name: 'slide', duration: 300, curve: 'easeOut' }
+    });
+  }
+});
 
 const onReady = () => {
-  $navigateTo(Menu, {
-    transition: {
-      name: 'slide',
-      duration: 300,
-      curve: 'easeOut'
-    }
+  // 1. Сначала передаем данные в машину
+  send({ 
+    type: 'UPDATE_FIELDS', 
+    email: email.value, 
+    password: password.value 
   });
+  
+  // 2. Запускаем процесс логина
+  send({ type: 'SUBMIT' });
+
+  // Имитируем ответ от API для теста (заглушка)
+  setTimeout(() => {
+    send({ type: 'SUCCESS' });
+  }, 1000);
 };
 
 </script>
 
 <template>
-    <Page actionBarHidden="true" class="light-yellow-bg">
-        <GridLayout rows="*, auto">
-                    <StackLayout row="0">
+  <Page actionBarHidden="true" class="light-yellow-bg">
+    <GridLayout rows="*, auto">
+      <StackLayout row="0" class="p-20">
+        <Label text="Войти" class="simple-title" />
 
-                      <Label text="Войти" class="simple-title" />
+        <Label text="Почта" class="small-text" />
+        <TextField v-model="email" class="yellow-field" keyboardType="email" />
 
-                      <Label text="Почта" class="small-text" />
-                      <TextField class="yellow-field"/>
+        <Label text="Пароль" class="small-text" />
+        <TextField v-model="password" class="yellow-field" secure="true" />
 
-                      <Label text="Пароль" class="small-text" />
-                      <TextField class="yellow-field"/>
+        <ActivityIndicator :busy="state.matches('loading')" v-if="state.matches('loading')" />
+      </StackLayout>
 
-
-                    </StackLayout>
-
-                    <Button text="Готово" @tap="onReady" class="vibe-button" row="1" style="margin-bottom: 30;" />
-                </GridLayout>
-    </Page>
+      <Button 
+        :text="state.matches('loading') ? 'Входим...' : 'Готово'" 
+        @tap="onReady" 
+        class="vibe-button" 
+        row="1" 
+        style="margin-bottom: 30;" 
+      />
+    </GridLayout>
+  </Page>
 </template>
 
