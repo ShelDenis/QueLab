@@ -13,8 +13,8 @@ import ChatScreen from './ChatScreen.vue';
 import { useGlobalState } from '../services/stateService';
 
 const { queue, online } = useGlobalState();
-const { state: qState, send: qSend } = queue;
-const { state: oState } = online;
+const { state: qState, send: qSend } = queue; // qState — Ref<State>
+const { state: oState, send: oSend } = online;
 
 
 const onActiveQueues = () => {
