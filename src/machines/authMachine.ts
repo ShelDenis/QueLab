@@ -1,63 +1,111 @@
+// src/machines/authMachine.ts
 import { createMachine, assign } from 'xstate';
 
-// 1. Описываем типы для контекста и событий (для TS это важно)
-interface AuthContext {
+// 1. Контекст
+export interface AuthContext {
   email: string;
   password: string;
   error: string | null;
+  token: string | null;
+  userId: number | null;
+  userName: string | null;
 }
 
-type AuthEvent = 
+// 2. События — ✅ ПРАВИЛЬНЫЙ СИНТАКСИС
+// Ключевое исправление: data: { ... } вместо просто { ... }
+export type AuthEvent =
   | { type: 'UPDATE_FIELDS'; email: string; password: string }
   | { type: 'SUBMIT' }
-  | { type: 'SUCCESS' }
+  | {
+      type: 'SUCCESS';
+      data: {  // ← Обязательно указываем ключ 'data'
+        token: string;
+        userId: number;
+        userName: string;
+      }
+    }
   | { type: 'FAILURE'; error: string }
-  | { type: 'RETRY' };
+  | { type: 'RETRY' }
+  | { type: 'LOGOUT' }; // ← Для будущего выхода из системы
 
-// 2. Создаем машину с указанием этих типов
+// 3. Создаём машину
 export const authMachine = createMachine({
   id: 'auth',
   initial: 'idle',
   context: {
     email: '',
     password: '',
-    error: null
-  } as AuthContext, // Подсказываем начальный тип контекста
+    error: null,
+    token: null,
+    userId: null,
+    userName: null
+  } satisfies AuthContext, // ✅ Используем satisfies для типизации контекста
   types: {} as {
     context: AuthContext;
     events: AuthEvent;
   },
   states: {
     idle: {
-      on: { 
+      on: {
         UPDATE_FIELDS: {
-          actions: assign(({ event }) => {
-            // Теперь TS точно знает, что у UPDATE_FIELDS есть email и password
-            return {
-              email: event.email,
-              password: event.password
-            };
-          })
+          actions: assign(({ event }) => ({
+            email: event.email,
+            password: event.password
+          }))
         },
-        SUBMIT: 'loading' 
+        SUBMIT: 'loading',
+        LOGOUT: { actions: assign(() => ({
+          email: '',
+          password: '',
+          token: null,
+          userId: null,
+          userName: null,
+          error: null
+        })) }
       }
     },
     loading: {
       on: {
-        SUCCESS: 'authenticated',
+        // ✅ SUCCESS: сохраняем данные из event.data
+        SUCCESS: {
+          target: 'authenticated',
+          actions: assign(({ event }) => ({
+            token: event.data.token,
+            userId: event.data.userId,
+            userName: event.data.userName,
+            error: null
+          }))
+        },
+        // ✅ FAILURE: сохраняем ошибку
         FAILURE: {
           target: 'error',
-          actions: assign({
-            error: ({ event }) => event.error
-          })
+          actions: assign(({ event }) => ({
+            error: event.error
+          }))
         }
       }
     },
+    // ✅ Убрали type: 'final' — актёр остаётся живым
     authenticated: {
-      type: 'final'
+      on: {
+        LOGOUT: {
+          target: 'idle',
+          actions: assign(() => ({
+            email: '',
+            password: '',
+            token: null,
+            userId: null,
+            userName: null,
+            error: null
+          }))
+        }
+      }
     },
     error: {
-      on: { RETRY: 'idle' }
+      on: {
+        RETRY: 'idle',
+        LOGOUT: 'idle'
+      }
     }
   }
 });
