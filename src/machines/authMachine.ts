@@ -9,6 +9,7 @@ export interface AuthContext {
   token: string | null;
   userId: number | null;
   userName: string | null;
+  avatarUrl: string | null;
 }
 
 // 2. События — ✅ ПРАВИЛЬНЫЙ СИНТАКСИС
@@ -26,7 +27,8 @@ export type AuthEvent =
     }
   | { type: 'FAILURE'; error: string }
   | { type: 'RETRY' }
-  | { type: 'LOGOUT' }; // ← Для будущего выхода из системы
+  | { type: 'LOGOUT' } // ← Для будущего выхода из системы
+  | { type: 'UPDATE_AVATAR';  data: { avatarUrl: string | null } };
 
 // 3. Создаём машину
 export const authMachine = createMachine({
@@ -38,7 +40,8 @@ export const authMachine = createMachine({
     error: null,
     token: null,
     userId: null,
-    userName: null
+    userName: null,
+    avatarUrl: null as string | null,
   } satisfies AuthContext, // ✅ Используем satisfies для типизации контекста
   types: {} as {
     context: AuthContext;
@@ -97,8 +100,13 @@ export const authMachine = createMachine({
             userId: null,
             userName: null,
             error: null
+          })),
+        },
+        UPDATE_AVATAR: {
+          actions: assign(({ event }) => ({
+            avatarUrl: (event as any).data.avatarUrl
           }))
-        }
+        } as any,
       }
     },
     error: {
