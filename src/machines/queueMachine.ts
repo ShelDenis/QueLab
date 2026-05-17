@@ -1,43 +1,103 @@
+// src/machines/queueMachine.ts
 import { createMachine, assign } from 'xstate';
+
+export interface QueueContext {
+  name: string;
+  description: string;
+  imageUri: string | null;
+  imageBase64: string | null;
+  error: string | null;
+  createdQueueId: number | null;
+}
+
+export type QueueEvent =
+  | { type: 'UPDATE_NAME'; name: string }
+  | { type: 'UPDATE_DESCRIPTION'; description: string }
+  | { type: 'SET_IMAGE'; data: { uri: string; base64: string } }
+  | { type: 'CLEAR_IMAGE' }
+  | { type: 'SUBMIT' }
+  | { type: 'SUCCESS'; data: { queueId: number } }
+  | { type: 'FAILURE'; error: string }
+  | { type: 'RESET' };
 
 export const queueMachine = createMachine({
   id: 'queue',
   initial: 'idle',
-  // Указываем типы прямо в контексте через 'as'
+
   context: {
-    position: null as number | null,
-    totalInQueue: 3 as number,
-    error: null as string | null
+    name: '',
+    description: '',
+    imageUri: null,
+    imageBase64: null,
+    error: null,
+    createdQueueId: null
   },
+
+  // ✅ ГЛОБАЛЬНЫЕ СОБЫТИЯ (на корневом уровне) — ТОЧКА обязательна!
+  on: {
+    RESET: {
+      target: '.idle',  // ← Точка, потому что это переход из корня в дочернее состояние
+      actions: assign(() => ({
+        name: '',
+        description: '',
+        imageUri: null,
+        imageBase64: null,
+        error: null,
+        createdQueueId: null
+      }))
+    }
+  },
+
   states: {
-    idle: { 
-      on: { JOIN: 'joining' } 
+    idle: {
+      on: {
+        // ✅ Локальные переходы — БЕЗ точки (соседние состояния)
+        UPDATE_NAME: {
+          actions: assign(({ event }) => ({ name: event.name }))
+        },
+        UPDATE_DESCRIPTION: {
+          actions: assign(({ event }) => ({ description: event.description }))
+        },
+        SET_IMAGE: {
+          actions: assign(({ event }) => ({
+            imageUri: event.data.uri,
+            imageBase64: event.data.base64
+          }))
+        },
+        CLEAR_IMAGE: {
+          actions: assign(() => ({
+            imageUri: null,
+            imageBase64: null
+          }))
+        },
+        SUBMIT: 'creating'  // ← Без точки: переход к соседу
+      }
     },
-    joining: {
+
+    creating: {
       on: {
         SUCCESS: {
-          target: 'waiting',
-          actions: assign({ position: 4, totalInQueue: 4 })
+          target: 'created',  // ← ✅ БЕЗ точки! 'created' — сосед 'creating'
+          actions: assign(({ event }) => ({
+            createdQueueId: event.data.queueId,
+            error: null
+          }))
         },
-        FAILURE: 'idle'
+        FAILURE: {
+          target: 'error',  // ← ✅ БЕЗ точки!
+          actions: assign(({ event }) => ({ error: event.error }))
+        }
       }
     },
-    waiting: {
+
+    created: {
+      // Машина остаётся здесь, пока не придёт глобальный RESET
+    },
+
+    error: {
       on: {
-        MOVE_UP: {
-          actions: assign({ 
-            position: ({ context }: any) => {
-              // Добавляем проверку на null, чтобы Math.max не ругался
-              return context.position !== null ? Math.max(1, context.position - 1) : null;
-            }
-          })
-        },
-        YOUR_TURN: 'active',
-        LEAVE: 'idle'
+        SUBMIT: 'creating'  // ← Без точки
       }
-    },
-    active: {
-      on: { FINISH: 'idle' }
     }
   }
 });

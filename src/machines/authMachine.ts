@@ -28,7 +28,8 @@ export type AuthEvent =
   | { type: 'FAILURE'; error: string }
   | { type: 'RETRY' }
   | { type: 'LOGOUT' } // ← Для будущего выхода из системы
-  | { type: 'UPDATE_AVATAR';  data: { avatarUrl: string | null } };
+  | { type: 'UPDATE_AVATAR';  data: { avatarUrl: string | null } }
+  | { type: 'RESTORE';  data: { token: string; userId: number; userName: string; email: string; avatarUrl: string | null } };
 
 // 3. Создаём машину
 export const authMachine = createMachine({
@@ -54,6 +55,17 @@ export const authMachine = createMachine({
           actions: assign(({ event }) => ({
             email: event.email,
             password: event.password
+          }))
+        },
+        RESTORE: {
+          target: 'authenticated',
+          actions: assign(({ event }) => ({
+            token: event.data.token,
+            userId: event.data.userId,
+            userName: event.data.userName,
+            email: event.data.email,
+            avatarUrl: event.data.avatarUrl, // ← Аватар из БД
+            error: null
           }))
         },
         SUBMIT: 'loading',

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
-import { ref, watch } from 'nativescript-vue';
+import { ref, watch, onMounted } from 'nativescript-vue'; // ← 1. Добавили onMounted
 import { $navigateTo } from 'nativescript-vue';
-import { alert } from '@nativescript/core/ui/dialogs'; // ✅ Правильный импорт
+import { alert } from '@nativescript/core/ui/dialogs';
 import { authMachine } from '../machines/authMachine';
 import Menu from './Menu.vue';
 import { api } from '../services/api';
@@ -14,17 +14,31 @@ const email = ref('');
 const password = ref('');
 const isLoading = ref(false);
 
+// ✅ 2. Проверка при монтировании (для восстановления сессии)
+onMounted(() => {
+  // Если машина уже в authenticated → сразу переходим
+  if (state.value.value === 'authenticated' && state.value.context.token) {
+    console.log('🚀 Сессия восстановлена, переход в меню...');
+    $navigateTo(Menu, {
+      transition: { name: 'slide', duration: 300, curve: 'easeOut' },
+      clearHistory: true
+    });
+  }
+});
+
+// ✅ 3. Watch срабатывает при изменениях (для обычного входа)
 watch(() => state.value.value, (newState) => {
   if (newState === 'authenticated') {
+    console.log('🚀 Вход успешен, переход в меню...');
     $navigateTo(Menu, {
-      transition: { name: 'slide', duration: 300, curve: 'easeOut' }
+      transition: { name: 'slide', duration: 300, curve: 'easeOut' },
+      clearHistory: true
     });
   }
 });
 
 const onReady = async () => {
   if (!email.value || !password.value) {
-    // ✅ Используем правильную функцию alert
     await alert({
       title: 'Ошибка',
       message: 'Заполните все поля',
@@ -43,6 +57,7 @@ const onReady = async () => {
       u_pswrd: password.value
     });
 
+    // ✅ 4. Исправлено: отправляем SUCCESS только один раз с данными
     send({
       type: 'SUCCESS',
       data: {
@@ -51,14 +66,14 @@ const onReady = async () => {
         userName: response.user_name
       }
     });
-
-    send({ type: 'SUCCESS' });
+    // ❌ Убрали дублирующий send({ type: 'SUCCESS' }) без data
 
   } catch (error: any) {
     console.error('Login error:', error);
-    send({ type: 'ERROR', error: error.message });
 
-    // ✅ Показываем ошибку пользователю
+    // ✅ 5. Исправлено: тип события должен быть 'FAILURE' (как в машине)
+    send({ type: 'FAILURE', error: error.message });
+
     await alert({
       title: 'Ошибка входа',
       message: error.message || 'Не удалось подключиться к серверу',
@@ -98,4 +113,3 @@ const onReady = async () => {
     </GridLayout>
   </Page>
 </template>
-
