@@ -103,6 +103,12 @@ const onReady = async () => {
 
     const response = await api.createQueue(payload, token);
 
+    await dialogAlert({
+      title: "✅ Очередь создана!",
+      message: `ID очереди: ${response.q_id}\nПароль для входа: ${response.q_password}\n(Рассчитан автоматически из названия)`,
+      okButtonText: "ОК"
+    });
+
     sendQueue({ type: 'SUCCESS', data: { queueId: response.q_id } });
 
     // Сброс ПОСЛЕ успешной отправки

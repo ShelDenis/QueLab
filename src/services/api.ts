@@ -91,6 +91,24 @@ export interface UserProfile {
   avatar_url: string | null;
 }
 
+export interface QueueDetails {
+  q_id: number;
+  q_name: string;
+  q_description: string;
+  q_img_path: string | null;
+  q_creator_id: number;
+  participants: QueueParticipant[];
+}
+
+export interface QueueParticipant {
+  u_id: number;
+  u_name: string;
+  u_surname: string;
+  u_avatar_path: string | null;
+  position: number;  // Место в очереди
+  joined_at: string;
+}
+
 // ✅ API объект
 export const api = {
 
@@ -177,5 +195,64 @@ export const api = {
           }
         });
         return handleResponse<UserProfile>(response);
-      }
+      },
+
+    // ✅ Получить детали очереди по ID
+      async getQueueDetails(queueId: number, token: string): Promise<QueueDetails> {
+        const response = await fetchWithTimeout(`${API_BASE}/queues/${queueId}`, {
+          method: 'GET',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return handleResponse<QueueDetails>(response);
+      },
+
+      // ✅ Присоединиться к очереди
+      async joinQueue(queueId: number, token: string): Promise<{ success: boolean; position: number }> {
+        const response = await fetchWithTimeout(`${API_BASE}/queues/${queueId}/join`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({})
+        });
+        return handleResponse(response);
+      },
+
+      // ✅ Покинуть очередь
+      async leaveQueue(queueId: number, token: string): Promise<{ success: boolean }> {
+        const response = await fetchWithTimeout(`${API_BASE}/queues/${queueId}/leave`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return handleResponse(response);
+      },
+
+      async returnToEnd(queueId: number, token: string): Promise<{ success: boolean; new_position: number; message?: string }> {
+          const response = await fetchWithTimeout(`${API_BASE}/queues/${queueId}/return-to-end`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          return handleResponse(response);
+        },
+
+      async deleteQueue(queueId: number, token: string): Promise<{ success: boolean; message: string }> {
+        const response = await fetchWithTimeout(`${API_BASE}/queues/${queueId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return handleResponse(response);
+      },
+
+  async joinQueueWithPassword(queueId: number, password: string, token: string): Promise<{ success: boolean; message: string }> {
+      const response = await fetchWithTimeout(`${API_BASE}/queues/${queueId}/join-with-password`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ password })
+      });
+      return handleResponse(response);
+    }
 };

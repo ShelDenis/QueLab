@@ -5,6 +5,8 @@ import { useGlobalState } from '../services/stateService';
 import { api } from '../services/api';
 import Details from './Details.vue';
 import Menu from './Menu.vue';
+import Queue from './Queue.vue';
+console.log('📦 Модуль Queue.vue импортирован');
 
 const { auth } = useGlobalState();
 const queues = ref<any[]>([]);
@@ -30,10 +32,22 @@ const onMenu = () => {
   });
 };
 
+
+
 const onQueueTap = (queue: any) => {
-  $navigateTo(Details, {
-    transition: { name: 'slide', duration: 300, curve: 'easeOut' },
-    context: { queueId: queue.q_id }
+  console.log('👆 Нажатая очередь:', queue);
+
+  // Проверяем, есть ли вообще ID в объекте
+  const id = queue.q_id || queue.id;
+
+  if (!id) {
+    console.error('❌ ОШИБКА: У очереди нет поля q_id или id!');
+    return;
+  }
+
+  $navigateTo(Queue, {
+    transition: { name: 'slide', duration: 300 },
+    context: { queueId: id } // Передаем проверенный ID
   });
 };
 </script>

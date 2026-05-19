@@ -21,41 +21,105 @@ queueActor.subscribe((snapshot) => { queueState.value = snapshot; });
 authActor.subscribe((snapshot) => { authState.value = snapshot; });
 
 // ✅ ЛОГИКА ВОССТАНОВЛЕНИЯ СЕССИИ (исправленный синтаксис)
+// (async () => {
+//   const savedToken = appSettings.getString('auth_token');
+//
+// if (savedToken) {
+//   console.log('🔑 Токен найден, восстанавливаю сессию...');
+//   console.log('📊 Состояние машины ДО RESTORE:', authActor.getSnapshot().value);
+//
+//   try {
+//     const profile = await api.getProfile(savedToken);
+//     console.log('✅ Профиль загружен:', profile.user_name);
+//
+//     authActor.send({
+//       type: 'RESTORE',
+//       data: {
+//         token: savedToken,
+//         userId: profile.user_id,
+//         userName: profile.user_name,
+//         email: profile.email,
+//         // ✅ Исправлено: avatar_url (из интерфейса) + ?? null для безопасности
+//         avatarUrl: profile.avatar_url ?? null
+//       }
+//     });
+//
+//     // ✅ Проверяем состояние ПОСЛЕ отправки события
+//     setTimeout(() => {
+//       console.log('📊 Состояние машины ПОСЛЕ RESTORE:', authActor.getSnapshot().value);
+//       console.log('📦 Контекст после RESTORE:', authActor.getSnapshot().context);
+//     }, 100);
+//
+//   } catch (e: any) {
+//     console.warn('⚠️ Ошибка восстановления:', e.message);
+//     appSettings.remove('auth_token');
+//     authActor.send({ type: 'LOGOUT' });
+//   }
+// }
+// })();
+// (async () => {
+//   const savedToken = appSettings.getString('auth_token');
+//
+//   if (savedToken) {
+//     console.log('🔑 Токен найден, пробую восстановить сессию...');
+//     try {
+//       const profile = await api.getProfile(savedToken);
+//       console.log('✅ Сессия восстановлена:', profile.user_name);
+//
+//       authActor.send({
+//         type: 'RESTORE',
+//         data: {
+//           token: savedToken,
+//           userId: profile.user_id,
+//           userName: profile.user_name,
+//           email: profile.email,
+//           avatarUrl: profile.avatar_url ?? null
+//         }
+//       });
+//
+//     } catch (e: any) {
+//       // ⚠️ МЯГКАЯ ОБРАБОТКА: не ломаем сессию из-за таймаута/ошибки сети
+//       console.warn('⚠️ Не удалось проверить профиль (токен может быть валиден):', e.message);
+//
+//       // Удаляем токен ТОЛЬКО при 401/403 (протухший или неверный токен)
+//       if (e.message?.includes('401') || e.message?.includes('403')) {
+//         console.log('🚫 Токен невалиден, очищаю...');
+//         appSettings.remove('auth_token');
+//         authActor.send({ type: 'LOGOUT' });
+//       }
+//       // Во всех остальных случаях (сеть, 500) оставляем токен и даём пользователю войти снова
+//     }
+//   }
+// })();
 (async () => {
   const savedToken = appSettings.getString('auth_token');
 
-if (savedToken) {
-  console.log('🔑 Токен найден, восстанавливаю сессию...');
-  console.log('📊 Состояние машины ДО RESTORE:', authActor.getSnapshot().value);
+  if (savedToken) {
+    console.log('🔑 Токен найден, пробую восстановить сессию...');
+    try {
+      const profile = await api.getProfile(savedToken);
+      console.log('✅ Сессия восстановлена:', profile.user_name);
 
-  try {
-    const profile = await api.getProfile(savedToken);
-    console.log('✅ Профиль загружен:', profile.user_name);
+      authActor.send({
+        type: 'RESTORE',
+        data: {
+          token: savedToken,
+          userId: profile.user_id,
+          userName: profile.user_name,
+          email: profile.email,
+          avatarUrl: profile.avatar_url ?? null
+        }
+      });
+    } catch (e: any) {
+      // 🚨 При ЛЮБОЙ ошибке на старте считаем токен битым/истёкшим
+      console.warn('⚠️ Токен невалиден:', e.message);
+      appSettings.remove('auth_token');
 
-    authActor.send({
-      type: 'RESTORE',
-      data: {
-        token: savedToken,
-        userId: profile.user_id,
-        userName: profile.user_name,
-        email: profile.email,
-        // ✅ Исправлено: avatar_url (из интерфейса) + ?? null для безопасности
-        avatarUrl: profile.avatar_url ?? null
-      }
-    });
-
-    // ✅ Проверяем состояние ПОСЛЕ отправки события
-    setTimeout(() => {
-      console.log('📊 Состояние машины ПОСЛЕ RESTORE:', authActor.getSnapshot().value);
-      console.log('📦 Контекст после RESTORE:', authActor.getSnapshot().context);
-    }, 100);
-
-  } catch (e: any) {
-    console.warn('⚠️ Ошибка восстановления:', e.message);
-    appSettings.remove('auth_token');
-    authActor.send({ type: 'LOGOUT' });
+      // Сбрасываем машину состояний
+      authActor.send({ type: 'LOGOUT' });
+      console.log('🧹 Хранилище очищено, машина сброшена в idle');
+    }
   }
-}
 })();
 
 // ✅ Подписка: сохраняем ТОЛЬКО токен

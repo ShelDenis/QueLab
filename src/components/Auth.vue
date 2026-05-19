@@ -1,11 +1,9 @@
 <script lang="ts" setup>
-import { ref, watch, onMounted } from 'nativescript-vue'; // ← 1. Добавили onMounted
-import { $navigateTo } from 'nativescript-vue';
+import { ref, watch, $navigateTo } from 'nativescript-vue';
 import { alert } from '@nativescript/core/ui/dialogs';
-import { authMachine } from '../machines/authMachine';
-import Menu from './Menu.vue';
-import { api } from '../services/api';
 import { useGlobalState } from '../services/stateService';
+import { api } from '../services/api';
+import Menu from './Menu.vue';
 
 const { auth } = useGlobalState();
 const { state, send } = auth;
@@ -13,37 +11,37 @@ const { state, send } = auth;
 const email = ref('');
 const password = ref('');
 const isLoading = ref(false);
+const hasNavigated = ref(false); // ✅ Защита от "отскакивания"
 
-// ✅ 2. Проверка при монтировании (для восстановления сессии)
-onMounted(() => {
-  // Если машина уже в authenticated → сразу переходим
-  if (state.value.value === 'authenticated' && state.value.context.token) {
-    console.log('🚀 Сессия восстановлена, переход в меню...');
-    $navigateTo(Menu, {
-      transition: { name: 'slide', duration: 300, curve: 'easeOut' },
-      clearHistory: true
-    });
-  }
-});
+// ✅ Единый watcher: срабатывает сразу при монтировании И при изменениях
+watch(
+  () => state.value,
+  (snap) => {
+    if (hasNavigated.value) return;
+    if (snap.value === 'authenticated' && snap.context.token) {
+      hasNavigated.value = true;
+      console.log('🚀 Запрос навигации в меню...');
 
-// ✅ 3. Watch срабатывает при изменениях (для обычного входа)
-watch(() => state.value.value, (newState) => {
-  if (newState === 'authenticated') {
-    console.log('🚀 Вход успешен, переход в меню...');
-    $navigateTo(Menu, {
-      transition: { name: 'slide', duration: 300, curve: 'easeOut' },
-      clearHistory: true
-    });
-  }
-});
+      // ⏳ Даем NS время отрисовать текущий кадр и подготовить Frame
+      setTimeout(() => {
+        try {
+          $navigateTo(Menu, {
+            transition: { name: 'slide', duration: 300, curve: 'easeOut' },
+            // clearHistory: true ← Убираем для первой навигации, он может ломать стек
+          });
+          console.log('✅ $navigateTo вызван успешно');
+        } catch (e: any) {
+          console.error('❌ Ошибка $navigateTo:', e.message);
+        }
+      }, 0);
+    }
+  },
+  { immediate: true }
+);
 
 const onReady = async () => {
   if (!email.value || !password.value) {
-    await alert({
-      title: 'Ошибка',
-      message: 'Заполните все поля',
-      okButtonText: 'ОК'
-    });
+    await alert({ title: 'Ошибка', message: 'Заполните все поля', okButtonText: 'ОК' });
     return;
   }
 
@@ -57,7 +55,7 @@ const onReady = async () => {
       u_pswrd: password.value
     });
 
-    // ✅ 4. Исправлено: отправляем SUCCESS только один раз с данными
+    // ✅ Отправляем SUCCESS ТОЛЬКО ОДИН РАЗ с полными данными
     send({
       type: 'SUCCESS',
       data: {
@@ -66,12 +64,10 @@ const onReady = async () => {
         userName: response.user_name
       }
     });
-    // ❌ Убрали дублирующий send({ type: 'SUCCESS' }) без data
 
   } catch (error: any) {
     console.error('Login error:', error);
-
-    // ✅ 5. Исправлено: тип события должен быть 'FAILURE' (как в машине)
+    // ✅ Тип события должен совпадать с AuthEvent (FAILURE, а не ERROR)
     send({ type: 'FAILURE', error: error.message });
 
     await alert({
